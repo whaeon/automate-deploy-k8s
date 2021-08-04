@@ -1,0 +1,5 @@
+---
+- hosts: localhost
+  remote_user: root
+  roles:
+    - /home/chessman/chessman/gitlab/myself/k8s-ansible/roles/prep

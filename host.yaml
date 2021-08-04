@@ -1,0 +1,22 @@
+---
+all:
+    children:
+        k8s_master:
+            hosts:
+                master:
+                    host: 10.0.0.208
+                    ansible_ssh_user: chessman
+                    ansible_ssh_pass: chessman0304.
+                    ansible_become_pass: chessman0304.
+        k8s_worker:
+            hosts:
+                worker1:
+                    host: 10.0.0.193
+                    ansible_ssh_user: chessman
+                    ansible_ssh_pass: chessman0304.
+                    ansible_become_pass: chessman0304.
+                worker2:
+                    host: 10.0.0.172
+                    ansible_ssh_user: chessman
+                    ansible_ssh_pass: chessman0304.
+                    ansible_become_pass: chessman0304.

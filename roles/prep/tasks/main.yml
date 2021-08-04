@@ -1,0 +1,38 @@
+---
+# tasks file for /home/chessman/chessman/gitlab/myself/k8s-ansible/roles/prep
+- name: install docker and docker-compose
+  become: yes
+  ansible.builtin.script: initialization_docker_env.sh {{ ansible_ssh_pass }} {{ ansible_ssh_user }}
+  args:
+    creates: /usr/local/bin/docker-compose
+
+
+- name: update repository and install packages
+  become: yes
+  apt:
+    name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+    update_cache: yes
+
+- name: prep k8s source list file
+  become: yes
+  ansible.builtin.script: prep_k8s_repo.sh
+  args:
+    creates: /etc/apt/sources.list.d/kubernetes.list
+
+- name: update k8s repository and install kubeadm/kubelet/kubectl
+  become: yes
+  apt:
+    name:
+        - kubeadm
+        - kubelet
+        - kubectl
+    update_cache: yes
+ 
+- name: enable kubelet service
+  become: yes
+  ansible.builtin.command:
+    cmd: systemctl enable kubelet
+    creates: /etc/systemd/system/multi-user.target.wants/kubelet.service
