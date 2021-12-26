@@ -21,7 +21,7 @@ sudo systemctl start docker
 
 # add docker to docker group
 sudo groupadd docker
-sudo usermod -aG docker $2
+sudo usermod -aG docker $1
 
 # install docker-compose
 sudo curl -L https://github.com/docker/compose/releases/download/1.18.0/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
