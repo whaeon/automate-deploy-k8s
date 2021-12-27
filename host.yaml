@@ -4,25 +4,25 @@ all:
         k8s_master:
             hosts:
                 master:
-                    host: 10.0.0.210
-                    ansible_ssh_user: whaeon
-                    ansible_ssh_pass: whaeon0304.
+                    ansible_ssh_host: 192.168.3.32
+                    ansible_ssh_user: developer
+                    ansible_ssh_pass: abc123_
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
-                    ansible_become_pass: whaeon0304.
+                    ansible_become_pass: abc123_
                     ansible_ssh_private_key_file: ./ansible-private-key
         k8s_worker:
             hosts:
                 worker-1:
-                    host: 10.0.0.211
-                    ansible_ssh_user: whaeon
-                    ansible_ssh_pass: whaeon0304.
-                    ansible_become_pass: whaeon0304.
+                    ansible_ssh_host: 192.168.3.162
+                    ansible_ssh_user: developer
+                    ansible_ssh_pass: abc123_
+                    ansible_become_pass: abc123_
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
                     ansible_ssh_private_key_file: ./ansible-private-key
                 worker-2:
-                    host: 10.0.0.212
-                    ansible_ssh_user: whaeon
-                    ansible_ssh_pass: whaeon0304.
-                    ansible_become_pass: whaeon0304.
+                    ansible_ssh_host: 192.168.3.149
+                    ansible_ssh_user: developer
+                    ansible_ssh_pass: abc123_
+                    ansible_become_pass: abc123_
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
                     ansible_ssh_private_key_file: ./ansible-private-key
