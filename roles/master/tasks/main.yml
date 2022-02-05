@@ -3,7 +3,7 @@
 - name: master initialization
   become: yes
   ansible.builtin.command:
-    cmd: kubeadm init --apiserver-advertise-address={{ host }} --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12
+    cmd: kubeadm init --apiserver-advertise-address={{ ansible_ssh_host }} --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12
     creates: /etc/kubernetes/admin.conf
 
 - name: modify permission
