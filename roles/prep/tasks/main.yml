@@ -39,9 +39,9 @@
   become: yes
   apt:
     name:
-      - kubeadm
-      - kubelet
-      - kubectl
+      - kubeadm=1.16.3-00
+      - kubelet=1.16.3-00
+      - kubectl=1.16.3-00
     update_cache: yes
 
 - name: enable kubelet service
