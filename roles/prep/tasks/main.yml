@@ -41,6 +41,7 @@
   become: true
   ansible.builtin.command:
     cmd: install -m 755 /user/home/developer/runc.amd64 /usr/local/sbin/runc
+    creates: /usr/local/sbin/runc
 
 - name: load containerd profile
   become: true
@@ -51,6 +52,46 @@
   become: true
   ansible.builtin.command:
     cmd: systemctl enable --now containerd
+
+- name: download cni plugins
+  become: true
+  ansible.builtin.command:
+    cmd: wget https://github.com/containernetworking/plugins/releases/download/v1.1.1/cni-plugins-linux-amd64-v1.1.1.tgz -P /user/home/developer
+    creates: /user/home/developer/cni-plugins-linux-amd64-v1.1.1.tgz
+
+- name: create dir save cni plugins
+  become: true
+  ansible.builtin.command:
+    cmd: mkdir -p /opt/cni/bin
+    creates: /opt/cni/bin 
+
+- name: installing cni plugins
+  become: true
+  ansible.builtin.command:
+    cmd: tar Cxzvf /opt/cni/bin /user/home/developer/cni-plugins-linux-amd64-v1.1.1.tgz
+    creates: /opt/cni/bin/dhcp 
+
+# - name: resolve "bridge-nf-call-iptables does not exist" error
+#   become: true
+#   ansible.builtin.command:
+#     cmd: sed -i '$a\net.bridge.bridge-nf-call-iptables = 1' /etc/sysctl.conf
+#     creates: /proc/sys/net/bridge/bridge-nf-call-iptables
+
+- name: resolve "bridge-nf-call-iptables does not exist" error
+  become: true
+  ansible.builtin.command:
+    cmd: modprobe br_netfilter
+    creates: /proc/sys/net/bridge/bridge-nf-call-iptables
+
+- name: enable ip forward
+  become: true
+  ansible.builtin.command:
+    cmd: sed -i 's/^#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+
+- name: reload sysctl.conf
+  become: true
+  ansible.builtin.command:
+    cmd: sysctl -p
 
 # - name: restart docker daemon process
 #   become: true

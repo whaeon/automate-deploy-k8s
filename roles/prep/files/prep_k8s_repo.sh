@@ -4,7 +4,7 @@
 sudo swapoff -a
 
 # shutdown swap permanent
-sudo sed -i '#^/swap#d' /etc/fstab
+sudo sed -i '/swap/d' /etc/fstab
 
 mkdir ~/test
 # clean repo cache
