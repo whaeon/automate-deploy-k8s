@@ -7,7 +7,7 @@
 #     msg: "the joinToken is {{ joinToken.stdout }}"
 
 - name: join k8s cluster from worker node
-  become: yes
+  become: true
   vars:
     joinToken: "{{ hostvars['master']['token'] }}"
   ansible.builtin.command:

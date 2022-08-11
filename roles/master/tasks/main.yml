@@ -1,13 +1,13 @@
 ---
 # tasks file for ./roles/master
 - name: master initialization
-  become: yes
+  become: true
   ansible.builtin.command:
-    cmd: kubeadm init --apiserver-advertise-address={{ ansible_ssh_host }} --pod-network-cidr=10.244.0.0/16 --service-cidr=10.96.0.0/12
+    cmd: kubeadm init --apiserver-advertise-address={{ ansible_ssh_host }} --pod-network-cidr=10.244.0.0/16 --service-cidr=10.196.0.0/12 --ignore-preflight-errors=DirAvailable--var-lib-etcd
     creates: /etc/kubernetes/admin.conf
 
 - name: modify permission
-  become: yes
+  become: true
   ansible.builtin.script: cluster_init.sh {{ ansible_ssh_user }}
 
 - name: download CNI
@@ -21,7 +21,7 @@
     cmd: kubectl apply -f /tmp/kube-flannel.yml
 
 - name: get token
-  become: yes
+  become: true
   ansible.builtin.command:
     cmd: kubeadm token create --print-join-command
   register: joinToken
