@@ -10,15 +10,25 @@
   become: true
   ansible.builtin.script: cluster_init.sh {{ ansible_ssh_user }}
 
-- name: download CNI
+- name: download calico operator CNI
   ansible.builtin.command:
-    cmd: wget -P /tmp https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    cmd: wget -P /tmp https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/tigera-operator.yaml
   args:
-    creates: /tmp/kube-flannel.yml
+    creates: /tmp/tigera-operator.yaml
 
-- name: apply flannel CNI
+- name: download calico custom CNI
   ansible.builtin.command:
-    cmd: kubectl apply -f /tmp/kube-flannel.yml
+    cmd: wget -P /tmp https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/custom-resources.yaml
+  args:
+    creates: /tmp/custom-resources.yaml
+
+- name: apply calico operator CNI
+  ansible.builtin.command:
+    cmd: kubectl create -f /tmp/tigera-operator.yaml
+
+- name: apply calico custom CNI
+  ansible.builtin.command:
+    cmd: kubectl create -f /tmp/custom-resources.yaml
 
 - name: get token
   become: true
