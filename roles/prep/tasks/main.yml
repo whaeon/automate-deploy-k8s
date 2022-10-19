@@ -120,9 +120,9 @@
   become: true
   apt:
     name:
-      - kubeadm
-      - kubelet
-      - kubectl
+      - kubeadm=1.22.5-00
+      - kubelet=1.22.5-00
+      - kubectl=1.22.5-00
     update_cache: yes
 
 - name: enable kubelet service
