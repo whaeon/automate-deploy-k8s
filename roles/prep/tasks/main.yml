@@ -1,66 +1,183 @@
 ---
-- name: install docker and docker-compose
-  become: true
-  ansible.builtin.script: initialization_docker_env.sh {{ ansible_ssh_user }}
+- name: download and install crictl command
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: wget https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.26.0/crictl-v1.26.0-linux-amd64.tar.gz -P ~/ 
   args:
-    creates: /usr/local/bin/docker-compose
+    creates: ~/crictl-v1.26.0-linux-amd64.tar.gz
 
-- name: modify docker cgroups
-  become: true
+- name: install crictl
+  become: yes
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: tar zxvf ~/crictl-v1.26.0-linux-amd64.tar.gz -C /usr/local/bin
+    creates: /usr/local/bin/crictl
+
+- name: remove crictl package
+  become: yes
+  become_method: sudo 
+  ansible.builtin.command: rm -f ~/crictl-v1.26.0-linux-amd64.tar.gz
+
+- name: download containerd
+  become: yes
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: wget https://github.com/containerd/containerd/releases/download/v1.7.2/containerd-1.7.2-linux-amd64.tar.gz -P ~/
+    creates: ~/containerd-1.7.2-linux-amd64.tar.gz
+
+- name: install containerd
+  become: yes
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: tar Cxzvf /usr/local ~/containerd-1.7.2-linux-amd64.tar.gz
+    creates: /usr/local/bin/containerd
+
+- name: copy containerd systemd profile
+  become: yes
+  become_method: sudo
   ansible.builtin.copy:
-    src: daemon.json
-    dest: /etc/docker/
+    src: containerd.service
+    dest: /usr/local/lib/systemd/system/
+
+- name: download runc binary files
+  become: yes
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: wget https://github.com/opencontainers/runc/releases/download/v1.1.4/runc.amd64 -P ~/
+  args:
+    creates: ~/runc.amd64
+
+- name: install runc
+  become: yes
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: install -m 755 ~/runc.amd64 /usr/local/sbin/runc
+  args:
+    creates: /usr/local/sbin/runc
+
+- name: download cni plugins
+  become: true
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: wget https://github.com/containernetworking/plugins/releases/download/v1.2.0/cni-plugins-linux-amd64-v1.2.0.tgz -P ~/
+    creates: ~/cni-plugins-linux-amd64-v1.2.0.tgz
+
+- name: create dir save cni plugins
+  become: true
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: mkdir -p /opt/cni/bin
+    creates: /opt/cni/bin 
+
+- name: installing cni plugins
+  become: true
+  become_method: sudo
+  ansible.builtin.command:
+    cmd: tar Cxzvf /opt/cni/bin ~/cni-plugins-linux-amd64-v1.2.0.tgz
+    creates: /opt/cni/bin/dhcp 
+
+# - name: copy go package
+#   become: yes
+#   become_method: sudo
+#   ansible.builtin.unarchive: 
+#     src: go1.20.5.linux-amd64.tar.gz
+#     dest: /usr/local
+#     copy: no
+
+# - name: config go PATH
+#   ansible.builtin.command: grep "go" ~/.profile;if [ $? -eq 1 ];then echo "export PATH=$PATH:/usr/local/go/bin" >> ~/.profile;fi;source ~/.profile
+
+# - name: install cni plugins
+#   become: true
+#   become_method: sudo
+#   ansible.builtin.script: install-cni.sh
+#   args:
+#     creates: /etc/cni/net.d
+
+- name: create containerd dir
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: mkdir /etc/containerd
+  args:
+    creates: /etc/containerd
+
+- name: copy containerd configuration file
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: config.toml
+    dest: /etc/containerd/
+
+- name: Start Containerd
+  become: yes
+  become_method: sudo
+  systemd: name=containerd daemon_reload=yes state=started enabled=yes
+
+- name: config crictl runtime
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: crictl config runtime-endpoint unix:///run/containerd/containerd.sock
+
+- name: "Load br_netfilter kernel module"
+  become: yes
+  become_method: sudo
+  modprobe:
+    name: br_netfilter
+    state: present
 
 - name: resolve "bridge-nf-call-iptables does not exist" error
-  become: true
-  ansible.builtin.command:
-    cmd: modprobe br_netfilter
-    creates: /proc/sys/net/bridge/bridge-nf-call-iptables
+  become: yes
+  become_method: sudo
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
 
 - name: enable ip forward
-  become: true
-  ansible.builtin.command:
-    cmd: sed -i 's/^#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
+  become: yes
+  become_method: sudo
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
 
-- name: reload sysctl.conf
-  become: true
-  ansible.builtin.command:
-    cmd: sysctl -p
+- name: copy kubernetes images
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: images
+    dest: ~/
 
-- name: restart docker daemon process
-  become: true
-  ansible.builtin.command:
-    cmd: systemctl daemon-reload
+- name: prep k8s env
+  become: yes
+  become_method: sudo
+  ansible.builtin.script: prep.sh
 
-- name: restart docker service
-  become: true
-  ansible.builtin.command:
-    cmd: systemctl restart docker
-
-- name: update repository and install packages
-  become: true
+- name: install kubernetes command
+  become: yes
+  become_method: sudo
   apt:
     name:
-      - apt-transport-https
-      - ca-certificates
-      - curl
-    update_cache: yes
+      - kubeadm=1.22.17-00
+      - kubectl=1.22.17-00
+      - kubelet=1.22.17-00
+    update_cache: true
 
-- name: prep k8s source list file
-  become: true
-  ansible.builtin.script: prep_k8s_repo.sh
-
-- name: update k8s repository and install kubeadm/kubelet/kubectl
-  become: true
+- name: install nfs client
+  become: yes
+  become_method: sudo
   apt:
     name:
-      - kubeadm=1.22.5-00
-      - kubelet=1.22.5-00
-      - kubectl=1.22.5-00
-    update_cache: yes
+      # - nfs-utils
+      - nfs-common
+    update_cache: true
 
-- name: enable kubelet service
-  become: true
-  ansible.builtin.command:
-    cmd: systemctl enable kubelet
-    creates: /etc/systemd/system/multi-user.target.wants/kubelet.service
+- name: copy kubelet service
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: kubelet.service
+    dest: /lib/systemd/system/
+
+- name: start kubelet service
+  become: yes
+  become_method: sudo
+  systemd: name=kubelet daemon_reload=yes state=started enabled=yes

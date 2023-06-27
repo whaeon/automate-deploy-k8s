@@ -1,0 +1,11 @@
+---
+# other control plane join cluster
+- name: control plane join cluster
+  become: yes
+  become_method: sudo
+  vars:
+    certKey: "{{ hostvars['master-01']['key'] }}"
+    joinToken: "{{ hostvars['master-01']['token'] }}"
+  ansible.builtin.command:
+    cmd: "{{ joinToken.stdout }} --control-plane --certificate-key {{ certKey.stdout }}"
+    creates: /etc/kubernetes/kubelet.conf

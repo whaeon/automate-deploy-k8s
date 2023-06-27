@@ -1,45 +1,41 @@
 ---
 # tasks file for ./roles/master
+- name: get control plane certificate key first
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: kubeadm certs certificate-key
+  register: certKey
+
+- name: set certKey to hostvars
+  set_fact:
+    key: "{{ certKey }}"
+
 - name: master initialization
-  become: true
+  become: yes
+  become_method: sudo
   ansible.builtin.command:
-    cmd: kubeadm init --apiserver-advertise-address={{ ansible_ssh_host }} --pod-network-cidr=10.244.0.0/16 --service-cidr=10.196.0.0/12 --ignore-preflight-errors=DirAvailable--var-lib-etcd
-    creates: /etc/kubernetes/admin.conf
+    cmd: kubeadm init --certificate-key {{ certKey.stdout }} --control-plane-endpoint "{{ vip }}:16446" --upload-certs
 
 - name: modify permission
-  become: true
+  become: yes
+  become_method: sudo
   ansible.builtin.script: cluster_init.sh {{ ansible_ssh_user }}
 
-- name: download calico operator CNI
-  ansible.builtin.command:
-    cmd: wget -P /tmp https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/tigera-operator.yaml
-  args:
-    creates: /tmp/tigera-operator.yaml
-
-- name: download calico custom CNI
-  ansible.builtin.command:
-    cmd: wget -P /tmp https://raw.githubusercontent.com/projectcalico/calico/v3.24.1/manifests/custom-resources.yaml
-  args:
-    creates: /tmp/custom-resources.yaml
-
-- name: apply calico operator CNI
-  ansible.builtin.command:
-    cmd: kubectl create -f /tmp/tigera-operator.yaml
-
-- name: apply calico custom CNI
-  ansible.builtin.command:
-    cmd: kubectl create -f /tmp/custom-resources.yaml
-
-- name: get token
-  become: true
+- name: get woker node join token
+  become: yes
+  become_method: sudo
   ansible.builtin.command:
     cmd: kubeadm token create --print-join-command
   register: joinToken
 
-- name: set vars to hostvars
+- name: set joinToken to hostvars
   set_fact:
     token: "{{ joinToken }}"
 
-- name: check token
+- name: check joinToken
   debug:
-    msg: "the token is {{ joinToken.stdout }}"
+    msg: "worker node join token is: {{ joinToken.stdout }}"
+  
+- name: check certKey
+  debug:
+    msg: "control-plane join token is: {{ joinToken.stdout }} --control-plane --certificate-key {{ certKey.stdout }}"

@@ -3,26 +3,51 @@ all:
     children:
         k8s_master:
             hosts:
-                master:
-                    ansible_ssh_host: ip
+                master-01:
+                    ansible_ssh_port: port
                     ansible_ssh_user: user
-                    ansible_ssh_pass: password
+                    ansible_ssh_host: ip
+                    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+                    ansible_become_pass: sudo-password
+                    ansible_ssh_private_key_file: ./ansible-private-key
+        other_control_plane:
+            hosts:
+                master-02:
+                    ansible_ssh_port: port
+                    ansible_ssh_user: user
+                    ansible_ssh_host: ip
+                    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+                    ansible_become_pass: sudo-password
+                    ansible_ssh_private_key_file: ./ansible-private-key
+                master-03:
+                    ansible_ssh_port: port
+                    ansible_ssh_user: user
+                    ansible_ssh_host: ip
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
                     ansible_become_pass: sudo-password
                     ansible_ssh_private_key_file: ./ansible-private-key
         k8s_worker:
             hosts:
-                worker-1:
-                    ansible_ssh_host: ip
+                worker-01:
+                    ansible_ssh_port: port
                     ansible_ssh_user: user
-                    ansible_ssh_pass: password
-                    ansible_become_pass: sudo-password
+                    ansible_ssh_host: ip
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+                    ansible_become_pass: sudo-password
                     ansible_ssh_private_key_file: ./ansible-private-key
-                worker-2:
-                    ansible_ssh_host: ip
+                worker-02:
+                    ansible_ssh_port: port
                     ansible_ssh_user: user
-                    ansible_ssh_pass: password
-                    ansible_become_pass: sudo-password
+                    ansible_ssh_host: ip
                     ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+                    ansible_become_pass: sudo-password
+                    ansible_ssh_private_key_file: ./ansible-private-key
+        nfs_server:
+            hosts:
+                data:
+                    ansible_ssh_port: port
+                    ansible_ssh_user: user
+                    ansible_ssh_host: ip
+                    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+                    ansible_become_pass: sudo-password
                     ansible_ssh_private_key_file: ./ansible-private-key

@@ -1,0 +1,17 @@
+---
+- name: copy cilium to dest host
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: cilium-linux-amd64.tar.gz
+    dest: ~/cilium-linux-amd64.tar.gz
+
+- name: extract cilium
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: tar xzvfC ~/cilium-linux-amd64.tar.gz /usr/local/bin
+  args:
+    creates: /usr/local/bin/cilium
+
+- name: install cilium
+  ansible.builtin.command: cilium install

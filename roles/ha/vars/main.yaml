@@ -1,0 +1,6 @@
+--- 
+master01: ip
+master02: ip
+master03: ip
+network_card: ens160
+vip: ip

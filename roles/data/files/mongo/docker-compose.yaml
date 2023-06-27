@@ -1,0 +1,100 @@
+version: "3"
+services:
+  mongo-rs0-0:
+    container_name: m-0
+    image: mongo:4.4
+    expose:
+      - 27017
+    ports:
+      - 27018:27017
+    volumes:
+      - ./rs0-0/db:/data/db
+      - ./rs0-0/configdb:/data/configdb
+      - ./setup/mongo.key:/mongo.key
+        #- ./setup/mongod.conf.orig:/etc/mongod.conf.orig
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=H3LW*VccQDmM
+    command: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--keyFile", "/mongo.key"]
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /mongo.key
+        chown 999:999 /mongo.key
+        exec docker-entrypoint.sh $$@
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+
+  mongo-rs0-1:
+    container_name: m-1
+    image: mongo:4.4
+    expose:
+      - 27017
+    ports:
+      - 27019:27017
+    volumes:
+      - ./rs0-1/db:/data/db
+      - ./rs0-1/configdb:/data/configdb
+      - ./setup/mongo.key:/mongo.key
+        #- ./setup/mongod.conf.orig:/etc/mongod.conf.orig
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=H3LW*VccQDmM
+    command: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--keyFile", "/mongo.key"]
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /mongo.key
+        chown 999:999 /mongo.key
+        exec docker-entrypoint.sh $$@
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+
+  mongo-rs0-2:
+    container_name: m-2
+    image: mongo:4.4
+    expose:
+      - 27017
+    ports:
+      - 27020:27017
+    volumes:
+      - ./rs0-2/db:/data/db
+      - ./rs0-2/configdb:/data/configdb
+      - ./setup/mongo.key:/mongo.key
+        #- ./setup/mongod.conf.orig:/etc/mongod.conf.orig
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=H3LW*VccQDmM
+    command: ["/usr/bin/mongod", "--bind_ip_all", "--replSet", "rs0", "--keyFile", "/mongo.key"]
+    entrypoint:
+      - bash
+      - -c
+      - |
+        chmod 600 /mongodb.key
+        chown 999:999 /mongo.key
+        exec docker-entrypoint.sh $$@
+    healthcheck:
+      test: test $$(echo "rs.status().ok" | mongo --quiet) -eq 1
+      interval: 10s
+      start_period: 30s
+
+  setup-rs:
+    image: "setup-rs"
+    build: ./setup
+    entrypoint: ["/bin/bash", "./setup.sh"]
+    depends_on:
+      mongo-rs0-0:
+        condition: service_started
+      mongo-rs0-1:
+        condition: service_started
+      mongo-rs0-2:
+        condition: service_started

@@ -1,0 +1,98 @@
+---
+# config nfs server
+# TODO
+- name: install nfs server
+  become: yes
+  become_method: sudo
+  apt:
+    name:
+      - nfs-kernel-server
+      - nfs-common
+    update_cache: true
+
+# - name: create mounted dir
+#   become: yes
+#   become_method: sudo
+#   ansible.builtin.command: mkdir -p /data/kubedata
+#   args:
+#     creates: /data/kubedata
+
+- name: change mounted dir permissions
+  become: yes
+  become_method: sudo
+  ansible.builtin.file:
+    path: /data/kubedata
+    state: directory
+    # owner: "nobody:"
+    mode: "0766"
+
+- name: config exports file
+  become: yes
+  become_method: sudo
+  ansible.builtin.lineinfile:
+    path: /etc/exports
+    line: "/data/kubedata    *(rw,sync,no_subtree_check,no_root_squash,no_all_squash,insecure)"
+
+- name: start nfs server
+  become: yes
+  become_method: sudo
+  systemd: name=nfs-server state=started enabled=yes
+
+- name: export the directory to the remote machine
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: exportfs -rav
+
+# prepare docker env for mongodb
+- name: prepare docker software source
+  become: yes
+  become_method: sudo
+  ansible.builtin.script: prep_docker_env.sh
+
+- name: install docker and docker compose
+  become: yes
+  become_method: sudo
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    update_cache: yes
+
+- name: config accelerate address
+  become: yes
+  become_method: sudo
+  ansible.builtin.lineinfile:
+    path: /etc/docker/daemon.json
+    create: yes
+    line: '{ "registry-mirrors": ["https://ra9q5uam.mirror.aliyuncs.com"] }'
+
+- name: start docker
+  become: yes
+  become_method: sudo
+  systemd: name=docker state=started enabled=yes daemon-reload=yes
+
+# deploy mongodb
+- name: copy mongodb files
+  ansible.builtin.copy:
+    src: mongo
+    dest: ~/
+
+- name: copy mongo image
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: images/mongo
+    dest: ~/
+
+- name: load mongo image
+  become: yes
+  become_method: sudo
+  ansible.builtin.command: docker load -i ~/mongo
+
+- name: start mongodb
+  ansible.builtin.command: 
+    cmd: sudo docker compose up -d
+    chdir: ~/mongo

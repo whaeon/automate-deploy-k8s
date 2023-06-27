@@ -1,10 +1,30 @@
 ---
+- hosts: other_control_plane
+  roles:
+    - ha
+    - prep
+
 - hosts: k8s_master
   roles:
+    - ha
     - prep
     - master
+    - cni
 
 - hosts: k8s_worker
   roles:
     - prep
     - worker
+
+- hosts: other_control_plane
+  roles:
+    - control-plane
+
+# deploy services
+- hosts: nfs_server
+  roles:
+    - data
+
+# - hosts: k8s_master
+#   roles:
+#     - svc

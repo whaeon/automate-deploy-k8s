@@ -1,15 +1,10 @@
 ---
 # tasks file for roles/worker
-# - name: debug joinToken
-#   vars:
-#     joinToken: "{{ hostvars['master']['token'] }}"
-#   debug:
-#     msg: "the joinToken is {{ joinToken.stdout }}"
-
 - name: join k8s cluster from worker node
-  become: true
+  become: yes
+  become_method: sudo
   vars:
-    joinToken: "{{ hostvars['master']['token'] }}"
+    joinToken: "{{ hostvars['master-01']['token'] }}"
   ansible.builtin.command:
     cmd: "{{ joinToken.stdout }}"
     creates: /etc/kubernetes/kubelet.conf

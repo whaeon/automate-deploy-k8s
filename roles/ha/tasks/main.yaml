@@ -1,0 +1,39 @@
+---
+# install dependency packages
+- name: install keepalived and haproxy
+  become: yes
+  become_method: sudo
+  apt:
+    name:
+      - keepalived
+      - haproxy
+    update_cache: true
+
+- name: copy the configuration files of haproxy
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: haproxy.cfg
+    dest: /etc/haproxy/
+
+- name: copy the configuration files of keepalived
+  become: yes
+  become_method: sudo
+  ansible.builtin.copy:
+    src: keepalived.conf
+    dest: /etc/keepalived/keepalived.conf
+
+- name: replace the ip address in keepalived and haproxy configuration files
+  become: yes
+  become_method: sudo
+  ansible.builtin.script: config.sh {{ master01 }} {{ master02 }} {{ master03 }} {{ network_card }} {{ vip }}
+
+- name: start keepalived
+  become: yes
+  become_method: sudo
+  systemd: name=keepalived enabled=yes state=started
+
+- name: start haproxy
+  become: yes
+  become_method: sudo
+  systemd: name=haproxy enabled=yes state=restarted
